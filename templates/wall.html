@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Kindness Wall (Approved)</h2>
+
+
+<ul class="notes">
+  {% for n in notes %}
+  <li class="note">
+    <div class="note-top">
+      <span class="giver">{{ n.giver_name or 'Anonymous' }} {% if n.giver_type=='student' and n.giver_section %}• {{ n.giver_section.label() }}{% endif %}</span>
+      <span class="time">{{ n.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+    </div>
+    <div class="note-mid">
+      {% if n.receiver_type == 'student' %}
+        <span class="to">→ {{ n.receiver_name_text }}{% if n.receiver_section %} ({{ n.receiver_section.label() }}){% endif %}</span>
+      {% elif n.receiver_type == 'teacher' and n.receiver_teacher %}
+        <span class="to">→ {{ n.receiver_teacher.name }} ({{ n.receiver_teacher.subject }})</span>
+      {% elif n.receiver_type == 'staff' and n.receiver_staff %}
+        <span class="to">→ {{ n.receiver_staff.name }} ({{ n.receiver_staff.role }})</span>
+      {% endif %}
+    </div>
+    <p class="msg">{{ n.message }}</p>
+  </li>
+  {% else %}
+  <li>No notes yet. Be the first to appreciate someone!</li>
+  {% endfor %}
+  </ul>
+
+{% endblock %}

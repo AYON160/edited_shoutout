@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section class="schoolbar">
+  <div class="sb-name">{{ school.name }}</div>
+  <div class="sb-meta">{{ school.motto }} • Session {{ school.session }}</div>
+</section>
+<section class="hero-banner" aria-label="Celebrate Kindness">
+  <div class="hb-copy">
+    <h1>Appreciate More. Smile More.</h1>
+    <p class="muted">One kind note can make someone’s day. Post yours now.</p>
+    <div class="hb-cta">
+      <a class="btn" href="{{ url_for('post_student') }}">Post a Thank-You</a>
+      <a class="btn ghost" href="{{ url_for('leaders') }}">View Leaders</a>
+    </div>
+  </div>  
+
+  <div class="hb-art">
+    <img id="heroImg"
+         src="{{ url_for('static', filename='img/hero.jpg') }}"
+         alt="Students celebrating kindness">
+  </div>
+</section>
+
+
+<section class="support-marquee" aria-label="Support Teachers and Staff">
+  <div class="marquee">
+    <div class="marquee__inner">
+      <a class="btn" href="{{ url_for('post_teacher') }}">Thank a Teacher</a>
+      <a class="btn ghost" href="{{ url_for('post_staff') }}">Thank to a Staff</a>
+      <a class="btn" href="{{ url_for('post_student') }}">Appreciate a section</a>
+      <a class="btn ghost" href="{{ url_for('post_teacher') }}">Thank a Teacher</a>
+      <a class="btn" href="{{ url_for('post_staff') }}">Appreciate Staff</a>
+      <a class="btn ghost" href="{{ url_for('post_student') }}">Appreciate a section</a>
+      <a class="btn" href="{{ url_for('post_teacher') }}">Support a Teacher</a>
+      <a class="btn ghost" href="{{ url_for('post_staff') }}">Thank to a Staff</a>
+      <a class="btn" href="{{ url_for('post_student') }}">Appreciate a section</a>
+      <a class="btn ghost" href="{{ url_for('post_teacher') }}">Thank a Teacher</a>
+      <a class="btn" href="{{ url_for('post_staff') }}">Thank to a Staff</a>
+      <a class="btn ghost" href="{{ url_for('post_student') }}">Appreciate a section</a>
+      <a class="btn" href="{{ url_for('post_teacher') }}">Support a Teacher</a>
+      <a class="btn ghost" href="{{ url_for('post_staff') }}">Appreciate Staff</a>
+      <a class="btn" href="{{ url_for('post_student') }}">Appreciate a section</a>
+      <a class="btn ghost" href="{{ url_for('post_teacher') }}">Support a Teacher</a>
+      <a class="btn" href="{{ url_for('post_staff') }}">Appreciate Staff</a>
+    </div>
+  </div>
+  <div class="marquee fade left"></div>
+  <div class="marquee fade right"></div>
+  
+</section>
+
+
+<section class="grid2">
+ 
+
+  <div class="card leaders">
+    <div class="card-head"><h3>Leader Highlights</h3></div>
+    <div class="tabs">
+      <button data-tab="weekly" class="active">Weekly</button>
+      <button data-tab="monthly">Monthly</button>
+      <button data-tab="alltime">All‑time</button>
+      <button data-tab="yearly">Year</button>
+    </div>
+
+    <div class="panels">
+      {% for key,label in {"weekly":"This Week","monthly":"This Month","alltime":"All‑time","yearly":"This Year"}.items() %}
+      <div class="panel {% if loop.first %}active{% endif %}" id="panel-{{key}}">
+        <div class="statgrid">
+          <div class="statbox section a">
+            <div class="stitle">Top Appreciated Section</div>
+            <div class="sval">{{ leader[key].top_appreciated_section or "—" }}</div>
+          </div>
+          <div class="statbox section b">
+            <div class="stitle">Top Appreciator Section</div>
+            <div class="sval">{{ leader[key].top_appreciator_section or "—" }}</div>
+          </div>
+          <div class="statbox teacher">
+            <div class="stitle">Top Teacher</div>
+            <div class="sval">{{ leader[key].top_teacher or "—" }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="actions">
+      <a class="btn small" href="{{ url_for('leaders') }}">More → Leaderboard</a>
+    </div>
+  </div>
+   <div class="card">
+    <div class="card-head">
+      <h3>Recent Kindness</h3>
+      <a class="smalllink" href="{{ url_for('wall') }}">More → Wall</a>
+    </div>
+    <ul class="notes compact">
+      {% for n in recent %}
+      <li class="note">
+        <div class="note-top">
+          <span class="giver">{{ n.giver_name or 'Anonymous' }} {% if n.giver_type=='student' and n.giver_section %}• {{ n.giver_section.label() }}{% endif %}</span>
+          <span class="time">{{ n.created_at.strftime('%b %d, %I:%M %p') }}</span>
+        </div>
+        <div class="note-mid">
+          {% if n.receiver_type == 'student' %}
+            <span class="to">→ {{ n.receiver_name_text }}{% if n.receiver_section %} ({{ n.receiver_section.label() }}){% endif %}</span>
+          {% elif n.receiver_type == 'teacher' and n.receiver_teacher %}
+            <span class="to">→ {{ n.receiver_teacher.name }} ({{ n.receiver_teacher.subject }})</span>
+          {% elif n.receiver_type == 'staff' and n.receiver_staff %}
+            <span class="to">→ {{ n.receiver_staff.name }} ({{ n.receiver_staff.role }})</span>
+          {% endif %}
+        </div>
+        <p class="msg">{{ n.message }}</p>
+      </li>
+      {% else %}
+      <li class="muted">No posts yet. Be the first to appreciate someone!</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll(".tabs button");
+  const panels=document.querySelectorAll(".panel");
+  tabs.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      tabs.forEach(b=>b.classList.remove("active"));
+      panels.forEach(p=>p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+
+
+<!-- Hero image script -->
+<script>
+  // Tiny, dependency-free animation: gentle float + mouse parallax
+  (function () {
+    const wrap = document.querySelector('.hero-banner');
+    const img  = document.getElementById('heroImg');
+
+    // auto float (sin/cos drift)
+    let t = 0, raf;
+    function float() {
+      t += 0.015;
+      const tx = Math.sin(t) * 6;     // px
+      const ty = Math.cos(t * 0.8) * 4;
+      img.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tx/30}deg)`;
+      raf = requestAnimationFrame(float);
+    }
+    float();
+
+    // parallax on mouse
+    wrap.addEventListener('mousemove', (e) => {
+      const r = wrap.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;  // -0.5..0.5
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      img.style.transition = 'transform 60ms linear';
+      img.style.transform += ` translate(${x*8}px, ${y*8}px) rotate(${x*4}deg)`;
+    });
+
+    // smooth restore on mouse leave
+    wrap.addEventListener('mouseleave', () => {
+      img.style.transition = 'transform 300ms ease';
+    });
+
+    // subtle “ping” on CTA click
+    document.querySelectorAll('.hb-cta .btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> {
+        btn.classList.remove('ping'); void btn.offsetWidth; btn.classList.add('ping');
+      });
+    });
+  })();
+</script>
+{% endblock %}

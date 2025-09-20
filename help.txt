@@ -1,0 +1,195 @@
+# Hackathon App - Help & Documentation
+
+Overview
+- Purpose: A school kindness wall to post appreciations and celebrate teachers, students, and staff.
+- Tech: Flask, SQLAlchemy (SQLite by default), HTML templates, CSS in static/style.css.
+- Entry points: app.py:create_app(), templates/*.html, static/style.css.
+
+Core Entities
+- ClassSection: class_name, section_name. Unique per pair.
+- Student: name, class_section.
+- Teacher: name, subject.
+- Staff: name, role.
+- Note: appreciation message; supports receivers: student/teacher/staff; rich fields for giver/receiver.
+- User: role (student/teacher/staff), name, username, password_hash, optional class_section (for students).
+
+Authentication & Sessions
+- Registration: /auth/register
+  - Roles: student, teacher, staff
+  - Required: role, name, username, password
+  - Students may pick Class–Section
+- Login: /auth/login
+  - Inputs: username, password, remember (checkbox)
+  - On success: session['uid']=user.id; flash welcome; session['unlocked']=True
+  - Remember me: session.permanent=True; app.permanent_session_lifetime=30 days
+- Logout: /auth/logout clears user session and sets unlocked False
+- Guest unlock: /lock allows temporary access without account (session['unlocked']=True)
+- Access control: before_request redirects to /lock unless user is logged in or unlocked; static and auth endpoints allowed.
+
+Roles & Capabilities
+- Student: can post appreciations as student; can appreciate students/teachers/staff. If anonymous student, name defaults to "Anonymous".
+- Teacher: can post appreciations (giver_type='teacher'); must provide own name in forms requiring it.
+- Staff: can post appreciations (giver_type='student' by default in forms; switchable per form controls).
+- Admin (PIN-based): manage approvals, sections, teachers, staff via /admin; PIN from env ADMIN_PIN (default 1234).
+
+Posting Appreciations
+- /post/student
+  - Giver: student or teacher; validations on section/name
+  - Receiver: student name (free text) + section; message required
+  - Weighting: student->student cross-section = 2; same-section = 1
+  - Status: pending until admin approval
+- /post/teacher
+  - Receiver: selected teacher; message required; weight 1
+- /post/staff
+  - Receiver: selected staff; message required; weight 1
+
+Wall & Leaders
+- /wall: shows recently approved notes and simple bar aggregates for top teachers, students, staff (Top 4 + Others)
+- /leaders: computes leaders across timeframes; shows top appreciated/approciator sections and top teachers, with bar charts
+
+Certificates
+- /certificate/<category>/<rank>
+  - category: teacher | staff | student_section
+  - rank: 1..3
+  - Generates a printable certificate view for all-time leaders; redirects to /leaders if insufficient data
+
+Admin Panel
+- /admin/login: enter PIN to access
+- /admin: approve/hide notes; add ClassSections; add Teachers; add Staff
+- /admin/delete/<id>: permanently delete a note (admin only)
+- /admin/note/<id>/<action>: approve | hide | unhide
+
+Templates & UI
+- Base styling: static/style.css; forms use .form/.card/.actions classes
+- Buttons: .btn and variants .small, .ghost
+- Inputs: styled with rounded borders; focus rings via --ring
+- Responsive: header nav collapses under 820px; hero and grids adapt via media queries
+- Auth login UI: templates/auth_login.html
+  - Username, Password inputs
+  - Remember me checkbox (reduced label gap)
+  - Sign in button, link to Create account, and guest entry button
+
+Data & Seeding
+- On startup, app creates tables and seeds default ClassSections, Teachers, and Staff if missing
+- Light auto-migration ensures Note has new columns if DB existed previously
+
+Environment
+- SECRET_KEY: Flask session secret (default 'change-me')
+- DATABASE_URL: default sqlite:///kindness.db
+- ADMIN_PIN: default '1234'
+
+Flash Messages
+- Categories: 'ok' (success), 'error' (failure)
+- Used across forms for validation and feedback
+
+Remember Me Details
+- When checked: session is permanent for 30 days, user remains logged in across browser restarts
+- Unchecked: standard session (clears on browser close)
+
+Security Notes
+- Passwords hashed via Werkzeug generate_password_hash/check_password_hash
+- Admin uses a simple PIN; change ADMIN_PIN in environment
+- CSRF not enabled by default; consider adding Flask-WTF for production
+
+How-To: Common Flows
+- Sign Up (student)
+  1) Go to /auth/register
+  2) Select role Student, provide name, username, password, class–section
+  3) Submit; then sign in at /auth/login
+- Sign In with Remember Me
+  1) Go to /auth/login; enter credentials
+  2) Check "Remember me" to stay signed in for 30 days
+- Post to a Student
+  1) Go to /post/student; choose your role and details
+  2) Enter receiver student name and section; write message; submit
+- Admin Approvals
+  1) Go to /admin/login; enter PIN
+  2) Approve/Hide pending notes; manage master data
+
+Troubleshooting
+- Invalid credentials: ensure username is lowercase; reset by creating new user (no reset flow yet)
+- Missing sections/teachers/staff: add via Admin panel
+- Not seeing notes: wait for admin approval; check /admin
+
+Extensibility Ideas
+- Add email-based password reset
+- Add CSRF protection and rate limiting
+- Add pagination to wall and leaders
+- Add user profiles and avatars
+- Export leaders and notes as CSV
+
+Advanced Q&A
+1) How are animations implemented without JS frameworks?
+- CSS only. Key pieces: .support-marquee uses keyframes scroll-left with duplicated inline items for infinite loop; .btn.ping uses a one-shot keyframe ring; .hero-banner relies on gradients and a blurred radial ::after layer. No layout thrash since only transform/opacity animate.
+
+2) Why choose CSS animations over JS for the marquee?
+- Lower CPU and simpler code. CSS animations run on the compositor thread; JS-based intervals risk jank and more complexity. We don’t need dynamic speed control, so CSS fits well.
+
+3) How would you pause/restart the marquee on hover for accessibility?
+- Add .support-marquee .marquee__inner{ animation-play-state: paused } on :hover or via a toggle button to satisfy WCAG 2.2.2 for moving content.
+
+4) How does Remember Me work and what are its risks?
+- Sets session.permanent=True with 30-day lifetime. Risk: stolen cookies persist longer. Mitigate with secure cookies (SESSION_COOKIE_SECURE), HttpOnly, SameSite=Lax/Strict, and device logout UI.
+
+5) Is the login flow vulnerable to CSRF?
+- Yes, by default. Add CSRF tokens (Flask-WTF), set SameSite=Lax and require POST with CSRF for all state-changing endpoints.
+
+6) Could there be session fixation?
+- Potentially if session isn’t regenerated on login. After successful login, rotate the session cookie (session.regenerate or manually pop + reset) to prevent fixation.
+
+7) Why is pywhatkit a bad idea here?
+- It controls WhatsApp Web via web automation which is brittle, not privacy-safe, and often breaks. It can trigger rate limits, is unsuitable for server-side environments, and violates user trust. Prefer official APIs (email/SMTP, Twilio/WhatsApp Business API) or in-app notifications.
+
+8) What would be a better notification strategy than pywhatkit?
+- Server-queued notifications (RQ/Celery) + transactional email (SMTP), or official WhatsApp Business API via a verified provider. Add user-managed notification preferences.
+
+9) How to harden admin access beyond a PIN?
+- Replace PIN with proper admin users, hashed passwords, 2FA, IP rate limiting, login lockout, and audit logs. Move ADMIN_PIN to a migration path only for dev.
+
+10) How are DB writes validated?
+- Server-side checks in routes; improve by centralizing validation (WTForms/Pydantic-like), adding DB constraints (lengths, non-null), and guarding foreign keys at the ORM level.
+
+11) Why SQLite, and when to switch?
+- Great for single-node demos and small datasets. Switch to Postgres/MySQL when concurrent writes, backups, migrations, and analytics grow. Update DATABASE_URL and run Alembic migrations.
+
+12) How should schema migrations be handled?
+- Use Alembic. Current code has light auto-migrate for added columns on note; this is fine for dev but risky in prod. Replace with explicit revision scripts and CI-run migrations.
+
+13) Can bar-chart aggregations be wrong due to ties?
+- Ties are truncated by top N slicing. Communicate ties or include deterministic ordering (name secondary key). Consider showing exact counts on hover.
+
+14) Are the leaderboards time-bounded correctly?
+- leaders uses all approved notes, plus separate compute_leaders for multiple periods on home. If you want leaders by period on /leaders, reuse period_ranges() there as well.
+
+15) How to avoid N+1 queries in leaders/wall?
+- Preload related entities or compute counts with aggregate queries (GROUP BY). Current approach iterates Python-side; acceptable for small data, replace with single SELECTs at scale.
+
+16) How to cache computed leaders?
+- Use Flask-Caching (simplecache/redis). Cache per period key with short TTL (e.g., 60s) and bust on note status change.
+
+17) How to prevent spam submissions?
+- Add CSRF, per-IP rate limiting (Flask-Limiter), captcha (hCaptcha), and server validation length/regex. Store minimal request logs for abuse analysis.
+
+18) What accessibility considerations exist?
+- Ensure color contrast on .mainup backgrounds; provide focus styles (already present). Add aria-live regions for flash messages and labels for inputs/selects. Offer reduced motion option to pause marquee.
+
+19) How to structure tests?
+- Pytest with a Flask test client, a SQLite in-memory DB, and factories. Tests: auth (register/login/logout), posting flows, admin actions, leaders aggregation edge cases.
+
+20) How to deploy safely?
+- Use gunicorn/uvicorn workers behind Nginx, set env vars (SECRET_KEY, DATABASE_URL, ADMIN_PIN), enable HTTPS, configure secure cookies, and add logging/monitoring (Gunicorn access logs + Sentry).
+
+21) How to scale horizontally?
+- Stateless app with shared DB (Postgres) and shared session backend (Redis). Move static to CDN. Use a task queue for heavy jobs and cache hot aggregates.
+
+22) How to implement password reset?
+- Add email field to User, generate signed time-bound token (itsdangerous), email a link, verify, and allow password change with CSRF.
+
+23) Where should input size limits be enforced?
+- In forms (maxlength) and server-side (truncate/validate). Also enforce at DB layer with column lengths where applicable.
+
+24) How to add audit logging?
+- Record who did what and when: admin actions, status transitions, log IP/UA hashes. Store in an AuditLog table and emit structured logs.
+
+25) How to theme dark mode properly?
+- Use CSS variables with a data-theme attribute. Provide a toggle storing preference in localStorage; set prefers-color-scheme: dark as default if user hasn’t chosen.

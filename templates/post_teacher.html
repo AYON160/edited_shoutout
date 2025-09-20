@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Appreciate a Teacher</h1>
+<!-- Hero banner -->
+<section class="wall-hero">
+  <img src="{{ url_for('static', filename='img/teacher.jpg') }}"
+       alt="Appreciation banner" class="wall-hero-img">
+  <div class="wall-hero-copy">
+    <h2>Kindness Wall</h2>
+    <p class="muted">Thank Your Teacher for his Contribution</p>
+  </div>
+</section>
+<form method="post" class="form modern">
+  <div class="grid2">
+    <div class="card">
+      <h3>Who are you?</h3>
+      <div class="row choice">
+        <label><input type="radio" name="giver_type" value="student" checked> Student</label>
+        <label><input type="radio" name="giver_type" value="teacher"> Teacher</label>
+      </div>
+      <div class="row">
+        <input name="giver_name" placeholder="Your Name (teachers must fill this)">
+        <select name="giver_section_id" id="giver_section">
+          <option value="">Your Section (Class–Section)</option>
+          {% for s in sections %}
+            <option value="{{ s.id }}">{{ s.label() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <p class="hint">Students must select their section.</p>
+    </div>
+
+    <div class="card">
+      <h3>Select Teacher</h3>
+      <div class="row">
+        <select name="teacher_id" required>
+          <option value="">Choose a Teacher</option>
+          {% for t in teachers %}
+            <option value="{{ t.id }}">{{ t.name }} — {{ t.subject }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <label>Message</label>
+      <textarea name="message" maxlength="200" required placeholder="How did this teacher help you? (max 200 chars)"></textarea>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="submit">Submit for Approval</button>
+  </div>
+</form>
+<script>
+  const radiosT=document.querySelectorAll('input[name="giver_type"]');
+  const giverSectionT=document.getElementById('giver_section');
+  function toggleSecT(){
+    const isStu=document.querySelector('input[name="giver_type"]:checked').value==='student';
+    giverSectionT.disabled=!isStu;
+    giverSectionT.parentElement.style.opacity=isStu?1:0.6;
+  }
+  radiosT.forEach(r=>r.addEventListener('change',toggleSecT));
+  toggleSecT();
+</script>
+{% endblock %}

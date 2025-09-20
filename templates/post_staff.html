@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Appreciate Staff</h1>
+<form method="post" class="form modern">
+  <div class="grid2">
+    <div class="card">
+      <h3>Who are you?</h3>
+      <div class="row choice">
+        <label><input type="radio" name="giver_type" value="student" checked> Student</label>
+        <label><input type="radio" name="giver_type" value="teacher"> Teacher</label>
+      </div>
+      <div class="row">
+        <input name="giver_name" placeholder="Your Name (teachers must fill this)">
+        <select name="giver_section_id" id="giver_section">
+          <option value="">Your Section (Class–Section)</option>
+          {% for s in sections %}
+            <option value="{{ s.id }}">{{ s.label() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <p class="hint">Students must select their section.</p>
+    </div>
+
+    <div class="card">
+      <h3>Select Staff</h3>
+      <div class="row">
+        <select name="staff_id" required>
+          <option value="">Choose Staff</option>
+          {% for st in staffers %}
+            <option value="{{ st.id }}">{{ st.name }} — {{ st.role }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <label>Message</label>
+      <textarea name="message" maxlength="200" required placeholder="How did this staff member help you? (max 200 chars)"></textarea>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="submit">Submit for Approval</button>
+  </div>
+</form>
+<script>
+  const radiosS=document.querySelectorAll('input[name="giver_type"]');
+  const giverSectionS=document.getElementById('giver_section');
+  function toggleSecS(){
+    const isStu=document.querySelector('input[name="giver_type"]:checked').value==='student';
+    giverSectionS.disabled=!isStu;
+    giverSectionS.parentElement.style.opacity=isStu?1:0.6;
+  }
+  radiosS.forEach(r=>r.addEventListener('change',toggleSecS));
+  toggleSecS();
+</script>
+{% endblock %}

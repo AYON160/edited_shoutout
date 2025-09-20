@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card small" style="text-align:center">
+  <h2>Certificate of Appreciation</h2>
+  <p>This is to Certify that</p>
+  <h1 style="margin:4px 0">{{ label }}</h1>
+  <p>achieved <strong>{{ rank }}</strong>{% if rank==1 %}st{% elif rank==2 %}nd{% else %}rd{% endif %} place in
+    {% if category=='teacher' %}Teacher Appreciation{% elif category=='staff' %}Staff Appreciation{% else %}Student Section Appreciation{% endif %}
+  </p>
+  <div class="actions">
+    <button class="btn" onclick="window.print()">Download / Print</button>
+  </div>
+</section>
+{% endblock %}

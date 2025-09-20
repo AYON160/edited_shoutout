@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style> body{display:grid;place-items:center;min-height:100vh} </style>
+  </head>
+<body>
+  <form method="post" class="form small" style="width:min(520px,92vw)">
+    <div class="card">
+      <h2>Sign in</h2>
+      <label>Username</label>
+      <input name="username" required>
+      <label>Password</label>
+      <input name="password" type="password" required>
+      <label style="display:flex;align-items:center;gap:4px;margin-top:8px;"><input type="checkbox" name="remember" value="1"> Remember me</label>
+      <div class="actions">
+        <button type="submit">Sign in</button>
+        <a class="smalllink" href="{{ url_for('auth_register') }}">Create an account</a>
+      </div>
+      <div class="actions" style="justify-content:flex-start">
+        <form method="post" action="{{ url_for('lock') }}">
+          <button class="btn small ghost" type="submit">Enter as guest</button>
+        </form>
+      </div>
+    </div>
+  </form>
+</body>
+</html>

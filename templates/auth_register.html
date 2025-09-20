@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style> body{display:grid;place-items:center;min-height:100vh} </style>
+</head>
+<body>
+<form method="post" class="form small" style="width:min(520px,92vw)">
+  <div class="card">
+    <h2>Create account</h2>
+    <label>Role</label>
+    <select name="role" required id="roleSel">
+      <option value="">Select role</option>
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+      <option value="staff">Staff</option>
+    </select>
+    <label>Name</label>
+    <input name="name" required>
+    <div class="row">
+      <div style="flex:1">
+        <label>Username</label>
+        <input name="username" required>
+      </div>
+      <div style="flex:1">
+        <label>Password</label>
+        <input name="password" type="password" required>
+      </div>
+    </div>
+    <div id="studentSec">
+      <label>Class–Section (Students only)</label>
+      <select name="class_section_id">
+        <option value="">Select your section</option>
+        {% for s in sections %}
+          <option value="{{ s.id }}">{{ s.label() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="  actions">
+      <button type="submit">Create account</button>
+      <a class="smalllink" href="{{ url_for('auth_login') }}">Already have an account? Sign in</a>
+    </div>
+    <div class="actions" style="justify-content:flex-start">
+      <form method="post" action="{{ url_for('lock') }}">
+        <button class="btn small ghost" type="submit">Enter as guest</button>
+      </form>
+    </div>
+  </div>
+</form>
+<script>
+  const roleSel=document.getElementById('roleSel');
+  const studentSec=document.getElementById('studentSec');
+  function sync(){ const v=roleSel.value; studentSec.style.display = v==='student'? 'block':'none'; }
+  roleSel.addEventListener('change', sync); sync();
+</script>
+</body>
+</html>

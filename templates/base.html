@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or 'Shout-Out Corner' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='hackathon_smile.png') }}" type="image/png" />
+  <link rel="shortcut icon" href="{{ url_for('static', filename='hackathon_smile.png') }}" type="image/png" />
+</head>
+<body>
+  <header class="wrap header">
+    <div class="brand">🌼 Shout-Out Corner</div>
+
+    <!-- Mobile toggle -->
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+
+    <nav class="nav">
+      <a href="{{ url_for('home') }}" class="{% if request.endpoint=='home' %}active{% endif %}">Home</a>
+      <a href="{{ url_for('post_student') }}" class="{% if request.endpoint=='post_student' %}active{% endif %}">Appreciate Student</a>
+      <a href="{{ url_for('post_teacher') }}" class="{% if request.endpoint=='post_teacher' %}active{% endif %}">Appreciate Teacher</a>
+      <a href="{{ url_for('post_staff') }}" class="{% if request.endpoint=='post_staff' %}active{% endif %}">Appreciate Staff</a>
+      <a href="{{ url_for('wall') }}" class="{% if request.endpoint=='wall' %}active{% endif %}">Wall</a>
+      <a href="{{ url_for('leaders') }}" class="{% if request.endpoint=='leaders' %}active{% endif %}">Leaders</a>
+      <a class="admin {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin_login') }}">Admin</a>
+      {% if user %}
+        <span class="pill">{{ user.name }} ({{ user.role }})</span>
+        <a href="{{ url_for('auth_logout') }}">Logout</a>
+      {% endif %}
+      <button class="settings-btn" title="Settings" aria-label="Settings">⚙️</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash">
+          {% for cat, msg in messages %}<p class="{{cat}}">{{ msg }}</p>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="wrap foot">© 2025 Kindness Wall</footer>
+
+  <script>
+    const btn = document.querySelector('.nav-toggle');
+    const nav = document.querySelector('.nav');
+    btn.addEventListener('click', () => {
+      const open = nav.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    // Close on link click (mobile)
+    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      nav.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+    }));
+
+    // Settings modal
+    const modal = document.createElement('div');
+    modal.className = 'modal hidden';
+    modal.innerHTML = `
+      <div class="modal-card">
+        <h3>Display Settings</h3>
+        <div class="row">
+          <label>Theme</label>
+          <div class="theme-grid">
+            <button data-theme="light">Light</button>
+            <button data-theme="ocean">Ocean</button>
+            <button data-theme="forest">Forest</button>
+            <button data-theme="sunset">Sunset</button>
+          </div>
+        </div>
+        <div class="row">
+          <label>Account</label>
+          <div class="actions">
+            {% if user %}
+              <a class="btn small" href="{{ url_for('auth_logout') }}">Logout</a>
+            {% else %}
+              <a class="btn small" href="{{ url_for('auth_login') }}">Sign in</a>
+              <a class="btn small ghost" href="{{ url_for('auth_register') }}">Create account</a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="actions"><button class="btn small close">Close</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const settingsBtn = document.querySelector('.settings-btn');
+    settingsBtn.addEventListener('click',()=> modal.classList.remove('hidden'));
+    modal.addEventListener('click', (e)=>{
+      if(e.target === modal || e.target.classList.contains('close')) modal.classList.add('hidden');
+    });
+
+    // Apply theme via CSS variables on :root
+    function applyTheme(name){
+      const r = document.documentElement;
+      const themes = {
+        light:  {
+          bg:'#f7fafc',
+          card:'#ffffff',
+          ink:'#1f2937',
+          accent:'#2563eb',
+          mainbg:'radial-gradient(1200px 400px at 20% -20%, #e0f2fe 0%, transparent 60%),linear-gradient(135deg, #eff6ff, #ffffff)',
+          mainup: '#eff6ff'
+        },
+        ocean: {
+          bg:'#0f172a',
+          card:'#0b1220',
+          ink:'#e2e8f0',
+          accent:'#38bdf8',
+          mainbg:'radial-gradient(1200px 400px at 20% -20%, #0a507e 0%, transparent 60%),linear-gradient(135deg, #0a284e, #06103f)',
+          mainup: '#0a284e'
+        },
+        forest: {
+          bg:'#0b1f17',
+          card:'#0e2a20',
+          ink:'#d1fae5',
+          accent:'#10b981',
+          mainbg:'radial-gradient(1200px 400px at 20% -20%, #004b10 0%, transparent 60%),linear-gradient(135deg, #083512, #012e15)',
+          mainup: '#083512'
+        },
+        sunset: {
+          bg:'#1f0a12',
+          card:'#2a0f18',
+          ink:'#fde68a',
+          accent:'#f97316',
+          mainbg:'radial-gradient(1200px 400px at 20% -20%, #4d3f01 0%, transparent 60%),linear-gradient(135deg, #350808, #330d01)',
+          mainup: '#350808'
+          }
+      };
+      const t = themes[name] || themes.light;
+      r.style.setProperty('--bg', t.bg);
+      r.style.setProperty('--card', t.card);
+      r.style.setProperty('--ink', t.ink);
+      r.style.setProperty('--accent', t.accent);
+      r.style.setProperty('--muted', t.muted);
+      r.style.setProperty('--main-bg', t.mainbg);
+      r.style.setProperty('--mainup', t.mainup);
+    }
+    // Restore from localStorage
+    applyTheme(localStorage.getItem('theme')||'light');
+    modal.querySelectorAll('[data-theme]').forEach(b=> b.addEventListener('click',()=>{
+      const v=b.dataset.theme; localStorage.setItem('theme', v); applyTheme(v);
+    }));
+  </script>
+</body>
+</html>
